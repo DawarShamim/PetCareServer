@@ -9,15 +9,14 @@ const logger = require("morgan");
 app.use(logger("dev"));
 require("dotenv").config();
 
-const DBurl = process.env.DBurl;
+const DBuri = process.env.DBuri;
 const PORT = process.env.Port || 8080;
 
 
-app.use(cors()); // Add cors middleware
+app.use(cors()); 
 require("./middleware/passport")(passport);
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.use("/user", require("./routes/userRoute"));
 
@@ -42,9 +41,9 @@ app.all("*", (req, res) => {
 startApp = async () => {
     try {
         mongoose.set("strictQuery", false);
-        await mongoose.connect(DBurl);
+        await mongoose.connect(DBuri);
         console.log("Connected to the database successfully");
-        server.listen(PORT, () => {
+        app.listen(PORT, () => {
             console.log("Server started on port", PORT);
         });
     } catch (err) {

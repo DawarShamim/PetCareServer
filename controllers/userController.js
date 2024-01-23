@@ -48,8 +48,9 @@ exports.login = async (req, res) => {
         }
         const token = jwt.sign(
             {
-                user_id: user.user_id,
-                email: user.email
+                user_id: user._id,
+                email: user.email,
+                name: user.name
             },
             jwtKey
         );
@@ -85,7 +86,8 @@ exports.register = async (req, res, next) => {
         const token = jwt.sign(
             {
                 user_id: newUser.user_id,
-                email: newUser.email
+                email: newUser.email,
+                name:newUser.name
             },
             jwtKey
         );
