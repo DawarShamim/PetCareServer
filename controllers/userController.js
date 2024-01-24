@@ -87,7 +87,7 @@ exports.register = async (req, res, next) => {
             {
                 user_id: newUser.user_id,
                 email: newUser.email,
-                name:newUser.name
+                name: newUser.name
             },
             jwtKey
         );
@@ -98,7 +98,6 @@ exports.register = async (req, res, next) => {
     }
 };
 
-
 exports.getPulse = async (req, res, next) => {
 
     try {
@@ -108,7 +107,7 @@ exports.getPulse = async (req, res, next) => {
 
         if (existingUser && existingUser.Pulse) {
             let petPulse = existingUser.Pulse;
-            return res.status(200).json({ success: true, message: 'updated Pulse', petPulse });
+            return res.status(200).json({ success: true, message: 'Current Pulse', petPulse, "Last Updated": existingUser.updatedAt });
         }
 
 
@@ -119,15 +118,13 @@ exports.getPulse = async (req, res, next) => {
 };
 
 exports.getLocation = async (req, res, next) => {
-
     try {
         const UserId = req.user.id
-        // Check if the username or email already exists
         const existingUser = await User.findById(UserId);
 
         if (existingUser && existingUser.longitude && existingUser.latitude) {
-            let locationData = (existingUser.longitude, existingUser.latitude);
-            return res.status(200).json({ success: true, message: 'updated Location', Coordinates: locationData });
+            let locationData = [existingUser.longitude, existingUser.latitude];
+            return res.status(200).json({ success: true, message: 'Current Location', Coordinates: locationData, "Last Updated": existingUser.updatedAt });
         }
 
         return res.status(400).json({ success: false, message: 'Not able to get Location' })
@@ -135,6 +132,41 @@ exports.getLocation = async (req, res, next) => {
         return res.status(500).json({ success: false, message: 'Connection Failed', error: err.message });
     }
 };
+
+exports.setPulse = async (req, res, next) => {
+    try {
+        const UserId = req.user.id
+        // Check if the username or email already exists
+        const existingUser = await User.findByIdAndUpdate(UserId, { Pulse: req.body.Pulse });
+
+        if (existingUser) {
+            return res.status(200).json({ success: true, message: 'updated Pulse' });
+        }
+        return res.status(400).json({ success: false, message: 'Not able to get Location' })
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Connection Failed', error: err.message });
+    }
+};
+
+exports.getLocAndPulse = async (req, res, next) => {
+    try {
+        const UserId = req.user.id
+        // Check if the username or email already exists
+        const existingUser = await User.findById(UserId);
+
+        if (existingUser && existingUser.longitude && existingUser.latitude & existingUser.Pulse) {
+
+            let locationData = [existingUser.longitude, existingUser.latitude];
+            return res.status(200).json({ success: true, message: 'updated Location And Pulse', Coordinates: locationData, Pulse: existingUser.Pulse, "Last Updated": existingUser.updatedAt });
+        }
+
+        return res.status(400).json({ success: false, message: 'Not able to get Location' })
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Connection Failed', error: err.message });
+    }
+};
+
+
 
 
 

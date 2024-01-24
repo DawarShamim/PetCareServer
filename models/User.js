@@ -16,14 +16,19 @@ const userSchema = new mongoose.Schema({
     },
     Pulse: {
         type: String,
+        default: ""
     },
     longitude: {
         type: String,
+        default: ""
     },
     latitude: {
         type: String,
+        default: ""
     }
-});
+}
+    , { timestamps: true }
+);
 
 userSchema.pre('save', async function (next) {
     // Only hash the password if it's modified (or new)
