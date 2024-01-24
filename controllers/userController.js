@@ -79,7 +79,8 @@ exports.register = async (req, res, next) => {
         // Create a new user entry in the database
         const newUser = await User.create({
             email: email,
-            password: password
+            password: password,
+            name:name
         });
 
         // Generate JWT token for the new user
