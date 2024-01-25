@@ -19,19 +19,18 @@ exports.updatePassword = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
         // Check if the old password matches the stored hashed password
-        const passwordMatch = await bcrypt.compare(oldPassword, user.Password);
+        const passwordMatch = await bcrypt.compare(oldPassword, user.password);
 
         if (!passwordMatch) {
             return res.status(401).json({ message: 'Old password is incorrect' });
         }
-        user.Password = newPassword;
+        user.password = newPassword;
         await user.save();
         res.status(200).json({ message: 'Password updated successfully' });
     } catch (error) {
         next(error);
     }
 };
-
 
 exports.login = async (req, res) => {
     try {
@@ -50,7 +49,8 @@ exports.login = async (req, res) => {
             {
                 user_id: user._id,
                 email: user.email,
-                name: user.name
+                name: user.name,
+                phone: user.phone
             },
             jwtKey
         );
@@ -67,6 +67,7 @@ exports.register = async (req, res, next) => {
         const name = req.body?.Name;
         const email = req.body?.Email;
         const password = req.body?.Password;
+        const phone = req.body?.Phone;
         const confirmPassword = req.body?.ConfirmPassword;
 
         // Check if the username or email already exists
@@ -80,7 +81,8 @@ exports.register = async (req, res, next) => {
         const newUser = await User.create({
             email: email,
             password: password,
-            name:name
+            name: name,
+            phone: phone
         });
 
         // Generate JWT token for the new user
