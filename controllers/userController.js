@@ -36,6 +36,14 @@ exports.login = async (req, res) => {
     try {
         const email = req.body?.Email;
         const password = req.body?.Password;
+        if (!email.trim()) {
+            return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+        }
+
+        // Check if the password is empty or doesn't meet your criteria
+        if (!password.trim()) {
+            return res.status(400).json({ success: false, message: 'Password must have at least one symbol, one digit, and be at least 8 characters long' });
+        }
         let user = await User.findOne({ email: email });
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -70,6 +78,23 @@ exports.register = async (req, res, next) => {
         const phone = req.body?.Phone;
         const confirmPassword = req.body?.ConfirmPassword;
 
+        // Check if any of the required fields are empty
+        if (!name || !email || !password || !phone || !confirmPassword) {
+            return res.status(400).json({ success: false, message: 'All fields are required' });
+        }
+
+        if (!email.trim() || !isValidEmail(email)) {
+            return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+        }
+
+        // Check if the password is empty or doesn't meet your criteria
+        if (!password.trim() || !isValidPassword(password)) {
+            return res.status(400).json({ success: false, message: 'Password must have at least one symbol, one digit, and be at least 8 characters long' });
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({ success: false, message: 'Passwords do not match' });
+        }
         // Check if the username or email already exists
         const existingUser = await User.findOne({ email: email });
 
@@ -90,7 +115,8 @@ exports.register = async (req, res, next) => {
             {
                 user_id: newUser.user_id,
                 email: newUser.email,
-                name: newUser.name
+                name: newUser.name,
+                phone: newUser.phone
             },
             jwtKey
         );
@@ -105,15 +131,12 @@ exports.getPulse = async (req, res, next) => {
 
     try {
         const UserId = req.user.id
-        // Check if the username or email already exists
         const existingUser = await User.findById(UserId);
 
         if (existingUser && existingUser.Pulse) {
             let petPulse = existingUser.Pulse;
-            return res.status(200).json({ success: true, message: 'Current Pulse', petPulse, "Last Updated": existingUser.updatedAt });
+            return res.status(200).json({ success: true, message: 'Current Pulse', petPulse, "Last Updated": convertIsoToTime(existingUser.updatedAt) });
         }
-
-
         return res.status(400).json({ success: false, message: 'Not able to get Pulse Rate' })
     } catch (err) {
         return res.status(500).json({ success: false, message: 'Connection Failed' });
@@ -127,7 +150,7 @@ exports.getLocation = async (req, res, next) => {
 
         if (existingUser && existingUser.longitude && existingUser.latitude) {
             let locationData = [existingUser.longitude, existingUser.latitude];
-            return res.status(200).json({ success: true, message: 'Current Location', Coordinates: locationData, "Last Updated": existingUser.updatedAt });
+            return res.status(200).json({ success: true, message: 'Current Location', Coordinates: locationData, "Last Updated": convertIsoToTime(existingUser.updatedAt) });
         }
 
         return res.status(400).json({ success: false, message: 'Not able to get Location' })
@@ -141,6 +164,21 @@ exports.setPulse = async (req, res, next) => {
         const UserId = req.user.id
         // Check if the username or email already exists
         const existingUser = await User.findByIdAndUpdate(UserId, { Pulse: req.body.Pulse });
+
+        if (existingUser) {
+            return res.status(200).json({ success: true, message: 'updated Pulse' });
+        }
+        return res.status(400).json({ success: false, message: 'Not able to get Location' })
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Connection Failed', error: err.message });
+    }
+};
+
+exports.setLocation = async (req, res, next) => {
+    try {
+        const UserId = req.user.id
+        // Check if the username or email already exists
+        const existingUser = await User.findByIdAndUpdate(UserId, { Location: req.body.Location });
 
         if (existingUser) {
             return res.status(200).json({ success: true, message: 'updated Pulse' });
@@ -169,8 +207,28 @@ exports.getLocAndPulse = async (req, res, next) => {
     }
 };
 
+function convertIsoToTime(isoTimestamp) {
+    // Create a Date object from the ISO timestamp
+    const dateObject = new Date(isoTimestamp);
 
+    // Format the time
+    const formattedTime = dateObject.toISOString().slice(11, 19);
 
+    return formattedTime;
+}
+
+function isValidPassword(password) {
+    // Password must have at least one letter, one symbol, one digit, and be at least 8 characters long
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-])(?=.*\d).{8,}$/;
+    return passwordRegex.test(password);
+}
+
+function isValidEmail(email) {
+    // Use a regular expression or any other method to validate the email format
+    // For simplicity, a basic email format check is shown here
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
 
 
 

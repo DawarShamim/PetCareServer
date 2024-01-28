@@ -16,6 +16,8 @@ router.post("/setPulse", Authentication, UserController.setPulse);
 
 router.get("/getLocation", Authentication, UserController.getLocation);
 
+router.post("/setPulse", Authentication, UserController.setLocation);
+
 router.get("/getLocAndPulse", Authentication, UserController.getLocAndPulse);
 
 module.exports = router;
