@@ -5,8 +5,8 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 
-const logger = require("morgan");
-app.use(logger("dev"));
+// const logger = require("morgan");
+// app.use(logger("dev"));
 require("dotenv").config();
 
 const DBuri = process.env.DBuri;
