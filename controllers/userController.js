@@ -34,8 +34,7 @@ exports.updatePassword = async (req, res, next) => {
 
 exports.login = async (req, res) => {
     try {
-        const email = req.body?.Email;
-        const password = req.body?.Password;
+        const { email, password } = req.body
         if (!email.trim()) {
             return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
         }
@@ -44,12 +43,15 @@ exports.login = async (req, res) => {
         if (!password.trim()) {
             return res.status(400).json({ success: false, message: 'Password must have at least one symbol, one digit, and be at least 8 characters long' });
         }
-        let user = await User.findOne({ email: email });
+        let user = await User.findOne({ email: email }).select("+password").lean();
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        // const passwordMatch = (password === user.password);
+
+        const { password: hashedpassword, ..._user } = user;
+        const passwordMatch = await bcrypt.compare(password, hashedpassword);
+
         if (!passwordMatch) {
             return res.status(401).json({ success: false, message: 'Invalid password' });
         }
@@ -57,29 +59,21 @@ exports.login = async (req, res) => {
             {
                 user_id: user._id,
                 email: user.email,
-                name: user.name,
-                phone: user.phone
             },
             jwtKey
         );
-
-        return res.status(200).json({ success: true, message: 'Login successful', token });
+        console.log(_user)
+        return res.status(200).json({ success: true, message: 'Login successful', user: _user, token });
     } catch (err) {
         return res.status(500).json({ success: false, message: 'Failed to login', error: err.message });
     }
 };
 
 exports.register = async (req, res, next) => {
-
     try {
-        const name = req.body?.Name;
-        const email = req.body?.Email;
-        const password = req.body?.Password;
-        const phone = req.body?.Phone;
-        const confirmPassword = req.body?.ConfirmPassword;
+        const { name, email, password, phone, petType, petAge, petName, petBreed, petGender } = req.body;
 
-        // Check if any of the required fields are empty
-        if (!name || !email || !password || !phone || !confirmPassword) {
+        if (!name || !email || !password || !phone || !petGender || !petName || !petAge || !petType || !petBreed) {
             return res.status(400).json({ success: false, message: 'All fields are required' });
         }
 
@@ -92,9 +86,6 @@ exports.register = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Password must have at least one symbol, one digit, and be at least 8 characters long' });
         }
 
-        if (password !== confirmPassword) {
-            return res.status(400).json({ success: false, message: 'Passwords do not match' });
-        }
         // Check if the username or email already exists
         const existingUser = await User.findOne({ email: email });
 
@@ -102,120 +93,83 @@ exports.register = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Username already exists' })
         }
 
-        // Create a new user entry in the database
         const newUser = await User.create({
-            email: email,
-            password: password,
-            name: name,
-            phone: phone
+            email,
+            password,
+            name,
+            phone,
+            petType,
+            petAge,
+            petName,
+            petBreed,
+            petGender,
         });
 
-        // Generate JWT token for the new user
         const token = jwt.sign(
             {
                 user_id: newUser.user_id,
                 email: newUser.email,
-                name: newUser.name,
-                phone: newUser.phone
             },
             jwtKey
         );
 
-        return res.status(200).json({ success: true, message: 'Registration successful', token });
+        return res.status(200).json({ success: true, message: 'Registration successful', user: newUser, token });
     } catch (err) {
         return res.status(500).json({ success: false, message: 'Failed to register', error: err.message });
     }
 };
 
-exports.getPulse = async (req, res, next) => {
-
+exports.updateProfile = async (req, res, next) => {
     try {
-        const UserId = req.user.id
-        const existingUser = await User.findById(UserId);
+        const userId = req.user.id;
+        const { name, phone, petType, petAge, petName, petBreed, petGender } = req.body;
 
-        if (existingUser && existingUser.Pulse) {
-            let petPulse = existingUser.Pulse;
-            return res.status(200).json({ success: true, message: 'Current Pulse', petPulse, "Last Updated": convertIsoToTime(existingUser.updatedAt) });
-        }
-        return res.status(400).json({ success: false, message: 'Not able to get Pulse Rate' })
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Connection Failed' });
-    }
-};
-
-exports.getLocation = async (req, res, next) => {
-    try {
-        const UserId = req.user.id
-        const existingUser = await User.findById(UserId);
-
-        if (existingUser && existingUser.longitude && existingUser.latitude) {
-            let locationData = [existingUser.longitude, existingUser.latitude];
-            return res.status(200).json({ success: true, message: 'Current Location', Coordinates: locationData, "Last Updated": convertIsoToTime(existingUser.updatedAt) });
+        if (!name || !phone || !petGender || !petName || !petAge || !petType || !petBreed) {
+            return res.status(400).json({ success: false, message: 'All fields are required' });
         }
 
-        return res.status(400).json({ success: false, message: 'Not able to get Location' })
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Connection Failed', error: err.message });
-    }
-};
-
-exports.setPulse = async (req, res, next) => {
-    try {
-        const UserId = req.user.id
-        // Check if the username or email already exists
-        const existingUser = await User.findByIdAndUpdate(UserId, { Pulse: req.body.Pulse });
+        const existingUser = await User.findOneAndUpdate({ _id: userId }, {
+            name,
+            phone,
+            petType,
+            petAge,
+            petName,
+            petBreed,
+            petGender,
+        }, { new: true });
 
         if (existingUser) {
-            return res.status(200).json({ success: true, message: 'updated Pulse' });
+            return res.status(400).json({ success: false, message: 'Error Updating Profile' })
         }
-        return res.status(400).json({ success: false, message: 'Not able to get Location' })
+
+        return res.status(200).json({ success: true, message: 'Registration successful', user: existingUser, token });
     } catch (err) {
-        return res.status(500).json({ success: false, message: 'Connection Failed', error: err.message });
+        return res.status(500).json({ success: false, message: 'Failed to register', error: err.message });
     }
 };
 
-exports.setLocation = async (req, res, next) => {
+exports.attachDevice = async (req, res, next) => {
     try {
-        const UserId = req.user.id
-        // Check if the username or email already exists
-        const existingUser = await User.findByIdAndUpdate(UserId, { Location: req.body.Location });
+        const userId = req.user.id;
+        const { DeviceId } = req.body;
+
+        if (!DeviceId) {
+            return res.status(400).json({ success: false, message: 'All fields are required' });
+        }
+
+        const existingUser = await User.findOneAndUpdate({ _id: userId }, {
+            channelNumber: DeviceId,
+        }, { new: true });
 
         if (existingUser) {
-            return res.status(200).json({ success: true, message: 'updated Pulse' });
-        }
-        return res.status(400).json({ success: false, message: 'Not able to get Location' })
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Connection Failed', error: err.message });
-    }
-};
-
-exports.getLocAndPulse = async (req, res, next) => {
-    try {
-        const UserId = req.user.id
-        // Check if the username or email already exists
-        const existingUser = await User.findById(UserId);
-
-        if (existingUser && existingUser.longitude && existingUser.latitude & existingUser.Pulse) {
-
-            let locationData = [existingUser.longitude, existingUser.latitude];
-            return res.status(200).json({ success: true, message: 'updated Location And Pulse', Coordinates: locationData, Pulse: existingUser.Pulse, "Last Updated": existingUser.updatedAt });
+            return res.status(400).json({ success: false, message: 'Error Connecting Device' })
         }
 
-        return res.status(400).json({ success: false, message: 'Not able to get Location' })
+        return res.status(200).json({ success: true, message: 'Registration successful', user: existingUser, token });
     } catch (err) {
-        return res.status(500).json({ success: false, message: 'Connection Failed', error: err.message });
+        return res.status(500).json({ success: false, message: 'Failed to register', error: err.message });
     }
 };
-
-function convertIsoToTime(isoTimestamp) {
-    // Create a Date object from the ISO timestamp
-    const dateObject = new Date(isoTimestamp);
-
-    // Format the time
-    const formattedTime = dateObject.toISOString().slice(11, 19);
-
-    return formattedTime;
-}
 
 function isValidPassword(password) {
     // Password must have at least one letter, one symbol, one digit, and be at least 8 characters long

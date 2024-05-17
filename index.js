@@ -2,21 +2,25 @@
 const mongoose = require("mongoose");
 const passport = require("passport");
 const express = require("express");
-const app = express();
 const cors = require("cors");
+const devLogger = require("morgan");
 
-// const logger = require("morgan");
-// app.use(logger("dev"));
+
+const app = express();
+const http = require('http').Server(app);
+app.use(cors());
+
 require("dotenv").config();
 
 const DBuri = process.env.DBuri;
 const PORT = process.env.Port || 8080;
 
 
-app.use(cors()); 
+app.use(cors());
 require("./middleware/passport")(passport);
 
 app.use(express.json());
+app.use(devLogger('dev'));
 
 app.use("/user", require("./routes/userRoute"));
 
@@ -43,7 +47,7 @@ startApp = async () => {
         mongoose.set("strictQuery", false);
         await mongoose.connect(DBuri);
         console.log("Connected to the database successfully");
-        app.listen(PORT, () => {
+        http.listen(PORT, () => {
             console.log("Server started on port", PORT);
         });
     } catch (err) {

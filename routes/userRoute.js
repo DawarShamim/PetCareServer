@@ -10,14 +10,8 @@ router.post("/login", UserController.login);
 
 router.post("/updatePassword", Authentication, UserController.updatePassword);
 
-router.get("/getPulse", Authentication, UserController.getPulse);
+router.put("/", Authentication, UserController.updateProfile);
 
-router.post("/setPulse", Authentication, UserController.setPulse);
-
-router.get("/getLocation", Authentication, UserController.getLocation);
-
-router.post("/setPulse", Authentication, UserController.setLocation);
-
-router.get("/getLocAndPulse", Authentication, UserController.getLocAndPulse);
+router.post("/attachDevice", Authentication, UserController.attachDevice);
 
 module.exports = router;

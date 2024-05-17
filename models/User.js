@@ -16,26 +16,38 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
+        required: true,
+        select: false
+    },
+    channelNumber: {
+        type: Number,
+        default: null
+    },
+    petType: {
+        type: String,
         required: true
     },
-    Pulse: {
+    petAge: {
         type: String,
-        default: ""
+        required: true
     },
-    longitude: {
+    petName: {
         type: String,
-        default: ""
+        required: true
     },
-    latitude: {
+    petBreed: {
         type: String,
-        default: ""
+        required: true
+    },
+    petGender: {
+        type: String,
+        required: true
     }
 }
     , { timestamps: true }
 );
 
 userSchema.pre('save', async function (next) {
-    // Only hash the password if it's modified (or new)
     if (!this.isModified('password')) {
         return next();
     }
