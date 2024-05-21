@@ -34,7 +34,7 @@ exports.updatePassword = async (req, res, next) => {
 
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body
+        const { email, password } = req.body;
         if (!email.trim()) {
             return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
         }
@@ -71,9 +71,9 @@ exports.login = async (req, res) => {
 
 exports.register = async (req, res, next) => {
     try {
-        const { name, email, password, phone, petType, petAge, petName, petBreed, petGender } = req.body;
+        const { name, email, password, phone, petType, petAge, petAgeGroup, petBreed, petGender } = req.body;
 
-        if (!name || !email || !password || !phone || !petGender || !petName || !petAge || !petType || !petBreed) {
+        if (!name || !email || !password || !phone || !petGender || !petAgeGroup || !petAge || !petType || !petBreed) {
             return res.status(400).json({ success: false, message: 'All fields are required' });
         }
 
@@ -90,7 +90,7 @@ exports.register = async (req, res, next) => {
         const existingUser = await User.findOne({ email: email });
 
         if (existingUser) {
-            return res.status(400).json({ success: false, message: 'Username already exists' })
+            return res.status(400).json({ success: false, message: 'Email already exists' })
         }
 
         const newUser = await User.create({
@@ -100,7 +100,7 @@ exports.register = async (req, res, next) => {
             phone,
             petType,
             petAge,
-            petName,
+            petAgeGroup,
             petBreed,
             petGender,
         });
@@ -122,9 +122,9 @@ exports.register = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const { name, phone, petType, petAge, petName, petBreed, petGender } = req.body;
+        const { name, phone, petType, petAge, petAgeGroup, petBreed, petGender } = req.body;
 
-        if (!name || !phone || !petGender || !petName || !petAge || !petType || !petBreed) {
+        if (!name || !phone || !petGender || !petAgeGroup || !petAge || !petType || !petBreed) {
             return res.status(400).json({ success: false, message: 'All fields are required' });
         }
 
@@ -133,7 +133,7 @@ exports.updateProfile = async (req, res, next) => {
             phone,
             petType,
             petAge,
-            petName,
+            petAgeGroup,
             petBreed,
             petGender,
         }, { new: true });

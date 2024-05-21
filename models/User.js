@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     phone: {
-        type: String,
+        type: Number,
         required: true
     },
     password: {
@@ -28,10 +28,10 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     petAge: {
-        type: String,
+        type: Number,
         required: true
     },
-    petName: {
+    petAgeGroup: {
         type: String,
         required: true
     },
@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema({
     petGender: {
         type: String,
         required: true
+    },
+    profileImage:{
+        type: String,
+        default:"../../assets/ProfilePic.jpg"
     }
 }
     , { timestamps: true }
